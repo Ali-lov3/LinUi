@@ -1072,6 +1072,21 @@ function Library:SetPumpkinSliders(Enabled)
     end
 end
 
+function Library:WaitForTap(Input)
+    local StartPosition = Input.Position
+    local Moved = false
+
+    while Input.UserInputState ~= Enum.UserInputState.End and Input.UserInputState ~= Enum.UserInputState.Cancel do
+        Input.Changed:Wait()
+
+        if (Input.Position - StartPosition).Magnitude > 10 then
+            Moved = true
+        end
+    end
+
+    return not Moved and Input.UserInputState == Enum.UserInputState.End
+end
+
 function Library:Unload()
     for Idx = #Library.Signals, 1, -1 do
         local Connection = table.remove(Library.Signals, Idx)
@@ -3114,6 +3129,10 @@ do
             end
 
             if (Input.UserInputType == Enum.UserInputType.MouseButton1 and not Library:MouseIsOverOpenedFrame()) or Input.UserInputType == Enum.UserInputType.Touch then
+                if Input.UserInputType == Enum.UserInputType.Touch and not Library:WaitForTap(Input) then
+                    return
+                end
+
                 if ListOuter.Visible then
                     Dropdown:CloseDropdown()
                 else
@@ -3535,6 +3554,10 @@ do
 
                 if not ValidateClick(Input) then return end
                 if Button.Locked then return end
+
+                if Input.UserInputType == Enum.UserInputType.Touch and not Library:WaitForTap(Input) then
+                    return
+                end
 
                 if Button.DoubleClick then
                     Library:RemoveFromRegistry(Button.Label)
@@ -4122,6 +4145,10 @@ do
             if (Input.UserInputType == Enum.UserInputType.MouseButton1 and not Library:MouseIsOverOpenedFrame()) or Input.UserInputType == Enum.UserInputType.Touch then
                 for _, Addon in next, Toggle.Addons do
                     if Library:MouseIsOverFrame(Addon.DisplayFrame) then return end
+                end
+
+                if Input.UserInputType == Enum.UserInputType.Touch and not Library:WaitForTap(Input) then
+                    return
                 end
 
                 Toggle:SetValue(not Toggle.Value)
@@ -5150,6 +5177,10 @@ do
             end
 
             if (Input.UserInputType == Enum.UserInputType.MouseButton1 and not Library:MouseIsOverOpenedFrame()) or Input.UserInputType == Enum.UserInputType.Touch then
+                if Input.UserInputType == Enum.UserInputType.Touch and not Library:WaitForTap(Input) then
+                    return
+                end
+
                 if ListOuter.Visible then
                     Dropdown:CloseDropdown()
                 else
@@ -6606,24 +6637,28 @@ function Library:CreateWindow(...)
     Library:MakeDraggable(Outer, 25, true)
     if WindowInfo.Resizable then Library:MakeResizable(Outer, Library.MinSize) end
 
-    local WindowGlow = Library:Create("ImageLabel", {
-        Name = "Glow";
-        AnchorPoint = Vector2.new(0.5, 0.5);
-        BackgroundTransparency = 1;
-        Position = UDim2.fromScale(0.5, 0.5);
-        Size = UDim2.new(1, 44, 1, 44);
-        Image = "rbxassetid://5028857084";
-        ImageColor3 = Library.AccentColor;
-        ImageTransparency = 0.35;
-        ScaleType = Enum.ScaleType.Slice;
-        SliceCenter = Rect.new(24, 24, 276, 276);
-        ZIndex = 0;
-        Parent = Outer;
-    })
+    for Index = 1, 10 do
+        local GlowLayer = Library:Create("Frame", {
+            Name = "Glow";
+            AnchorPoint = Vector2.new(0.5, 0.5);
+            BackgroundColor3 = Library.AccentColor;
+            BackgroundTransparency = 0.92;
+            BorderSizePixel = 0;
+            Position = UDim2.fromScale(0.5, 0.5);
+            Size = UDim2.new(1, Index * 4, 1, Index * 4);
+            ZIndex = 0;
+            Parent = Outer;
+        })
 
-    Library:AddToRegistry(WindowGlow, {
-        ImageColor3 = "AccentColor";
-    })
+        Library:Create("UICorner", {
+            CornerRadius = UDim.new(0, Index * 2);
+            Parent = GlowLayer;
+        })
+
+        Library:AddToRegistry(GlowLayer, {
+            BackgroundColor3 = "AccentColor";
+        })
+    end
 
     local Inner = Library:Create("Frame", {
         BackgroundColor3 = Library.MainColor;
