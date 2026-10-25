@@ -583,15 +583,15 @@ function Library:MakeDraggable(Instance, Cutoff, IsMainWindow)
             end
 
             if not Dragging and Library:MouseIsOverFrame(Instance, Input) and (IsMainWindow == true and (Library.CanDrag == true and Library.Window.Holder.Visible == true) or true) then
-                DraggingInput = Input
-                DraggingStart = Input.Position
-                StartPosition = Instance.Position
-
-                local OffsetPos = Input.Position - DraggingStart
-                if OffsetPos.Y > (Cutoff or 40) then
+                local OffsetY = Input.Position.Y - Instance.AbsolutePosition.Y
+                if OffsetY > (Cutoff or 40) then
                     Dragging = false
                     return
                 end
+
+                DraggingInput = Input
+                DraggingStart = Input.Position
+                StartPosition = Instance.Position
 
                 Dragging = true
             end
