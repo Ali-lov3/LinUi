@@ -1107,7 +1107,7 @@ local Templates = {
         Size = UDim2.fromOffset(0, 0),
         AnchorPoint = Vector2.zero,
         TabPadding = 1,
-        SidebarWidth = 36,
+        SidebarWidth = 44,
         Logo = 18467582982,
         MenuFadeTime = 0.2,
         NotifySide = "Left",
@@ -6555,29 +6555,13 @@ function Library:CreateWindow(...)
     })
 
     local WindowLabel = Library:CreateLabel({
-        Position = UDim2.new(0, 7, 0, 0);
-        Size = UDim2.new(0, 0, 0, 25);
+        Position = UDim2.new(0, 0, 0, 0);
+        Size = UDim2.new(1, 0, 0, 25);
         Text = WindowInfo.Title or "";
-        TextXAlignment = Enum.TextXAlignment.Left;
-        Visible = false;
+        TextXAlignment = Enum.TextXAlignment.Center;
         ZIndex = 1;
         Parent = Inner;
     })
-
-    local WindowLogo = Library:Create("ImageLabel", {
-        BackgroundTransparency = 1;
-        Position = UDim2.new(0, 7, 0, 3);
-        Size = UDim2.fromOffset(19, 19);
-        ScaleType = Enum.ScaleType.Fit;
-        Visible = false;
-        ZIndex = 2;
-        Parent = Inner;
-    })
-
-    if WindowInfo.Logo then
-        ApplyIcon(WindowLogo, WindowInfo.Logo)
-        WindowLogo.Visible = true
-    end
 
     local MainSectionOuter = Library:Create("Frame", {
         BackgroundColor3 = Library.BackgroundColor;
@@ -6624,15 +6608,30 @@ function Library:CreateWindow(...)
     local TabListLayout = Library:Create("UIListLayout", {
         Padding = UDim.new(0, WindowInfo.TabPadding);
         FillDirection = Enum.FillDirection.Vertical;
-        HorizontalAlignment = Enum.HorizontalAlignment.Left;
+        HorizontalAlignment = Enum.HorizontalAlignment.Center;
         SortOrder = Enum.SortOrder.LayoutOrder;
         Parent = TabArea;
     })
 
+    local WindowLogo = Library:Create("ImageLabel", {
+        BackgroundTransparency = 1;
+        Size = UDim2.fromOffset(SidebarWidth - 8, SidebarWidth - 8);
+        ScaleType = Enum.ScaleType.Fit;
+        LayoutOrder = -2;
+        Visible = false;
+        ZIndex = 2;
+        Parent = TabArea;
+    })
+
+    if WindowInfo.Logo then
+        ApplyIcon(WindowLogo, WindowInfo.Logo)
+        WindowLogo.Visible = true
+    end
+
     Library:Create("Frame", {
         BackgroundColor3 = Library.BackgroundColor;
         BorderColor3 = Library.OutlineColor;
-        Size = UDim2.new(0, 0, 0, 0);
+        Size = UDim2.new(0, 0, 0, 10);
         LayoutOrder = -1;
         BackgroundTransparency = 1;
         ZIndex = 1;
@@ -7221,25 +7220,21 @@ function Library:CreateWindow(...)
         }
 
         local TabButton = Library:Create("Frame", {
-            BackgroundColor3 = Library.BackgroundColor;
-            BorderColor3 = Library.OutlineColor;
+            BackgroundTransparency = 1;
+            BorderSizePixel = 0;
             Size = UDim2.fromOffset(SidebarWidth - 1, SidebarWidth - 1);
             ZIndex = 1;
             Parent = TabArea;
-        })
-
-        Library:AddToRegistry(TabButton, {
-            BackgroundColor3 = "BackgroundColor";
-            BorderColor3 = "OutlineColor";
         })
 
         local TabButtonIcon = Library:Create("ImageLabel", {
             AnchorPoint = Vector2.new(0.5, 0.5);
             BackgroundTransparency = 1;
             Position = UDim2.fromScale(0.5, 0.5);
-            Size = UDim2.new(1, -12, 1, -12);
+            Size = UDim2.new(1, -20, 1, -20);
             ScaleType = Enum.ScaleType.Fit;
             ImageColor3 = Library.FontColor;
+            ImageTransparency = 0.45;
             ZIndex = 2;
             Parent = TabButton;
         })
@@ -7250,18 +7245,19 @@ function Library:CreateWindow(...)
             ImageColor3 = "FontColor";
         })
 
-        local Blocker = Library:Create("Frame", {
-            BackgroundColor3 = Library.MainColor;
+        local Indicator = Library:Create("Frame", {
+            AnchorPoint = Vector2.new(0, 0.5);
+            BackgroundColor3 = Library.AccentColor;
             BorderSizePixel = 0;
-            Position = UDim2.new(1, 0, 0, 0);
-            Size = UDim2.new(0, 1, 1, 0);
-            BackgroundTransparency = 1;
+            Position = UDim2.new(0, 0, 0.5, 0);
+            Size = UDim2.new(0, 2, 0.6, 0);
+            Visible = false;
             ZIndex = 3;
             Parent = TabButton;
         })
 
-        Library:AddToRegistry(Blocker, {
-            BackgroundColor3 = "MainColor";
+        Library:AddToRegistry(Indicator, {
+            BackgroundColor3 = "AccentColor";
         })
 
         local TabFrame = Library:Create("Frame", {
@@ -7522,11 +7518,8 @@ end
                 Tab:HideTab()
             end
 
-            Blocker.BackgroundTransparency = 0
-            TabButton.BackgroundColor3 = Library.MainColor
-            Library.RegistryMap[TabButton].Properties.BackgroundColor3 = "MainColor"
-            TabButtonIcon.ImageColor3 = Library.AccentColor
-            Library.RegistryMap[TabButtonIcon].Properties.ImageColor3 = "AccentColor"
+            Indicator.Visible = true
+            TabButtonIcon.ImageTransparency = 0
             TabFrame.Visible = true
 
             Tab:Resize()
@@ -7534,11 +7527,8 @@ end
         Tab.Show = Tab.ShowTab
 
         function Tab:HideTab()
-            Blocker.BackgroundTransparency = 1
-            TabButton.BackgroundColor3 = Library.BackgroundColor
-            Library.RegistryMap[TabButton].Properties.BackgroundColor3 = "BackgroundColor"
-            TabButtonIcon.ImageColor3 = Library.FontColor
-            Library.RegistryMap[TabButtonIcon].Properties.ImageColor3 = "FontColor"
+            Indicator.Visible = false
+            TabButtonIcon.ImageTransparency = 0.45
             TabFrame.Visible = false
         end
         Tab.Hide = Tab.HideTab
