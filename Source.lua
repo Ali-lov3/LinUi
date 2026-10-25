@@ -6606,6 +6606,25 @@ function Library:CreateWindow(...)
     Library:MakeDraggable(Outer, 25, true)
     if WindowInfo.Resizable then Library:MakeResizable(Outer, Library.MinSize) end
 
+    local WindowGlow = Library:Create("ImageLabel", {
+        Name = "Glow";
+        AnchorPoint = Vector2.new(0.5, 0.5);
+        BackgroundTransparency = 1;
+        Position = UDim2.fromScale(0.5, 0.5);
+        Size = UDim2.new(1, 44, 1, 44);
+        Image = "rbxassetid://5028857084";
+        ImageColor3 = Library.AccentColor;
+        ImageTransparency = 0.35;
+        ScaleType = Enum.ScaleType.Slice;
+        SliceCenter = Rect.new(24, 24, 276, 276);
+        ZIndex = 0;
+        Parent = Outer;
+    })
+
+    Library:AddToRegistry(WindowGlow, {
+        ImageColor3 = "AccentColor";
+    })
+
     local Inner = Library:Create("Frame", {
         BackgroundColor3 = Library.MainColor;
         BorderColor3 = Library.AccentColor;
