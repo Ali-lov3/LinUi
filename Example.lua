@@ -10,7 +10,7 @@ local Window = Library:CreateWindow({
     Center = true,
     AutoShow = true,
     TabPadding = 1,
-    SidebarWidth = 44,
+    SidebarWidth = 40,
     MenuFadeTime = 0.2,
 })
 
