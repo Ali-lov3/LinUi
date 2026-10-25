@@ -1,24 +1,24 @@
 local cloneref = (cloneref or clonereference or function(instance: any)
     return instance
 end)
-local clonefunction = (clonefunction or copyfunction or function(func) 
-    return func 
+local clonefunction = (clonefunction or copyfunction or function(func)
+    return func
 end)
 
 local httprequest = request or http_request or (http and http.request)
 local getassetfunc = getcustomasset
 
 local HttpService: HttpService = cloneref(game:GetService("HttpService"))
+local RunService: RunService = cloneref(game:GetService("RunService"))
 local isfolder, isfile, listfiles = isfolder, isfile, listfiles;
 
-local assert = function(condition, errorMessage) 
+local assert = function(condition, errorMessage)
     if (not condition) then
         error(if errorMessage then errorMessage else "assert failed", 3)
     end
 end
 
 if typeof(clonefunction) == "function" then
-    -- Fix is_____ functions for shitsploits, those functions should never error, only return a boolean.
 
     local
         isfolder_copy,
@@ -50,7 +50,6 @@ end
 local ThemeManager = {} do
 	local ThemeFields = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor", "VideoLink" }
 	ThemeManager.Folder = "LinoriaLibSettings"
-	-- if not isfolder(ThemeManager.Folder) then makefolder(ThemeManager.Folder) end
 
 	ThemeManager.Library = nil
 	ThemeManager.BuiltInThemes = {
@@ -62,6 +61,7 @@ local ThemeManager = {} do
 		['Tokyo Night']   = { 6, { FontColor = "ffffff", MainColor = "191925", AccentColor = "6759b3", BackgroundColor = "16161f", OutlineColor = "323232" } },
 		['Ubuntu']        = { 7, { FontColor = "ffffff", MainColor = "3e3e3e", AccentColor = "e2581e", BackgroundColor = "323232", OutlineColor = "191919" } },
 		['Quartz']        = { 8, { FontColor = "ffffff", MainColor = "232330", AccentColor = "426e87", BackgroundColor = "1d1b26", OutlineColor = "27232f" } },
+		['Halloween']     = { 9, { FontColor = "ffe9d2", MainColor = "17111f", AccentColor = "ff7a00", BackgroundColor = "0d0912", OutlineColor = "3a2650" } },
 	}
 
 	function ApplyBackgroundVideo(videoLink)
@@ -71,13 +71,11 @@ local ThemeManager = {} do
 			not (ThemeManager.Library and ThemeManager.Library.InnerVideoBackground)
 		then return; end;
 
-		--// Variables \\--
 		local videoInstance = ThemeManager.Library.InnerVideoBackground;
 		local extension = videoLink:match(".*/(.-)?") or videoLink:match(".*/(.-)$"); extension = tostring(extension);
 		local filename = string.sub(extension, 0, -6);
-		local _, domain = videoLink:match("^(https?://)([^/]+)"); domain = tostring(domain); -- _ is protocol
+		local _, domain = videoLink:match("^(https?://)([^/]+)"); domain = tostring(domain);
 
-		--// Check URL \\--
 		if videoLink == "" then
 			videoInstance:Pause();
 			videoInstance.Video = "";
@@ -86,7 +84,6 @@ local ThemeManager = {} do
 		end
 		if #extension > 5 and string.sub(extension, -5) ~= ".webm" then return; end;
 
-		--// Fetch Video Data \\--
 		local videoFile = ThemeManager.Folder .. "/themes/" .. string.gsub(domain .. filename, 0, 249) .. ".webm";
 		if not isfile(videoFile) then
 			local success, requestRes = pcall(httprequest, { Url = videoLink, Method = 'GET' })
@@ -95,7 +92,6 @@ local ThemeManager = {} do
 			writefile(videoFile, requestRes.Body)
 		end
 
-		--// Play Video \\--
 		videoInstance.Video = getassetfunc(videoFile);
 		videoInstance.Visible = true;
 		videoInstance:Play();
@@ -105,7 +101,6 @@ local ThemeManager = {} do
 		self.Library = library
 	end
 
-	--// Folders \\--
 	function ThemeManager:GetPaths()
 	    local paths = {}
 
@@ -115,7 +110,7 @@ local ThemeManager = {} do
 		end
 
 		paths[#paths + 1] = self.Folder .. '/themes'
-		
+
 		return paths
 	end
 
@@ -140,32 +135,208 @@ local ThemeManager = {} do
 		self.Folder = folder;
 		self:BuildFolderTree()
 	end
-	
-	--// Apply, Update theme \\--
+
+	function ThemeManager:ClearDecoration()
+		if self.DecorationConnection then
+			self.DecorationConnection:Disconnect()
+			self.DecorationConnection = nil
+		end
+
+		if self.Decoration then
+			self.Decoration:Destroy()
+			self.Decoration = nil
+		end
+	end
+
+	local function CreateLine(parent, ox, oy, a, b, color, transparency, thickness, zindex)
+		local delta = b - a
+		local mid = (a + b) / 2
+
+		local line = Instance.new("Frame")
+		line.AnchorPoint = Vector2.new(0.5, 0.5)
+		line.Position = UDim2.new(ox, mid.X, oy, mid.Y)
+		line.Size = UDim2.fromOffset(delta.Magnitude + 1, thickness)
+		line.Rotation = math.deg(math.atan2(delta.Y, delta.X))
+		line.BackgroundColor3 = color
+		line.BackgroundTransparency = transparency
+		line.BorderSizePixel = 0
+		line.ZIndex = zindex
+		line.Parent = parent
+
+		return line
+	end
+
+	local function CreateWeb(parent, ox, oy, startAngle, endAngle, radius, spokes, rings)
+		local color = Color3.fromRGB(235, 235, 245)
+		local origin = Vector2.new(0, 0)
+		local directions = {}
+
+		for Index = 1, spokes do
+			local angle = math.rad(startAngle + (endAngle - startAngle) * (Index - 1) / (spokes - 1))
+			directions[Index] = Vector2.new(math.cos(angle), math.sin(angle))
+			CreateLine(parent, ox, oy, origin, directions[Index] * radius, color, 0.55, 1, 10)
+		end
+
+		for Ring = 1, rings do
+			local distance = radius * Ring / rings
+
+			for Index = 1, spokes - 1 do
+				local a = directions[Index] * distance
+				local b = directions[Index + 1] * distance
+				local sag = ((a + b) / 2) * 0.86
+
+				CreateLine(parent, ox, oy, a, sag, color, 0.6, 1, 10)
+				CreateLine(parent, ox, oy, sag, b, color, 0.6, 1, 10)
+			end
+		end
+	end
+
+	local function CreateSpider(parent, offsetX)
+		local orange = Color3.fromRGB(255, 122, 0)
+
+		local thread = Instance.new("Frame")
+		thread.AnchorPoint = Vector2.new(0.5, 0)
+		thread.Position = UDim2.new(1, offsetX, 0, 0)
+		thread.Size = UDim2.fromOffset(1, 40)
+		thread.BackgroundColor3 = Color3.fromRGB(235, 235, 245)
+		thread.BackgroundTransparency = 0.4
+		thread.BorderSizePixel = 0
+		thread.ZIndex = 12
+		thread.Parent = parent
+
+		local spider = Instance.new("Frame")
+		spider.AnchorPoint = Vector2.new(0.5, 0.5)
+		spider.Position = UDim2.new(1, offsetX, 0, 50)
+		spider.Size = UDim2.fromOffset(28, 28)
+		spider.BackgroundTransparency = 1
+		spider.ZIndex = 13
+		spider.Parent = parent
+
+		local legAngles = { -60, -22, 18, 56 }
+		for _, angle in next, legAngles do
+			for _, side in next, { 1, -1 } do
+				local rotation = side == 1 and angle or 180 - angle
+
+				local leg = Instance.new("Frame")
+				leg.AnchorPoint = Vector2.new(0, 0.5)
+				leg.Position = UDim2.fromScale(0.5, 0.5)
+				leg.Size = UDim2.fromOffset(13, 2)
+				leg.Rotation = rotation
+				leg.BackgroundColor3 = orange
+				leg.BorderSizePixel = 0
+				leg.ZIndex = 13
+				leg.Parent = spider
+			end
+		end
+
+		local body = Instance.new("Frame")
+		body.AnchorPoint = Vector2.new(0.5, 0.5)
+		body.Position = UDim2.fromScale(0.5, 0.46)
+		body.Size = UDim2.fromOffset(14, 16)
+		body.BackgroundColor3 = Color3.fromRGB(10, 8, 14)
+		body.BorderSizePixel = 0
+		body.ZIndex = 14
+		body.Parent = spider
+
+		local bodyCorner = Instance.new("UICorner")
+		bodyCorner.CornerRadius = UDim.new(1, 0)
+		bodyCorner.Parent = body
+
+		local bodyStroke = Instance.new("UIStroke")
+		bodyStroke.Color = orange
+		bodyStroke.Thickness = 1.5
+		bodyStroke.Parent = body
+
+		local head = Instance.new("Frame")
+		head.AnchorPoint = Vector2.new(0.5, 0.5)
+		head.Position = UDim2.fromScale(0.5, 0.78)
+		head.Size = UDim2.fromOffset(9, 9)
+		head.BackgroundColor3 = Color3.fromRGB(10, 8, 14)
+		head.BorderSizePixel = 0
+		head.ZIndex = 15
+		head.Parent = spider
+
+		local headCorner = Instance.new("UICorner")
+		headCorner.CornerRadius = UDim.new(1, 0)
+		headCorner.Parent = head
+
+		local headStroke = Instance.new("UIStroke")
+		headStroke.Color = orange
+		headStroke.Thickness = 1.5
+		headStroke.Parent = head
+
+		for _, eyeX in next, { 0.3, 0.7 } do
+			local eye = Instance.new("Frame")
+			eye.AnchorPoint = Vector2.new(0.5, 0.5)
+			eye.Position = UDim2.fromScale(eyeX, 0.55)
+			eye.Size = UDim2.fromOffset(2, 2)
+			eye.BackgroundColor3 = Color3.fromRGB(255, 40, 40)
+			eye.BorderSizePixel = 0
+			eye.ZIndex = 16
+			eye.Parent = head
+		end
+
+		return thread, spider
+	end
+
+	function ThemeManager:ApplyDecoration(theme)
+		self:ClearDecoration()
+
+		local window = self.Library and self.Library.WindowFrame
+		if theme ~= "Halloween" or not window then return end
+
+		local decoration = Instance.new("Frame")
+		decoration.Name = "HalloweenDecoration"
+		decoration.BackgroundTransparency = 1
+		decoration.BorderSizePixel = 0
+		decoration.Size = UDim2.fromScale(1, 1)
+		decoration.ClipsDescendants = true
+		decoration.Active = false
+		decoration.ZIndex = 10
+		decoration.Parent = window
+
+		CreateWeb(decoration, 1, 0, 90, 180, 120, 6, 5)
+		CreateWeb(decoration, 0, 1, 270, 360, 90, 5, 4)
+
+		local offsetX = -64
+		local thread, spider = CreateSpider(decoration, offsetX)
+
+		self.Decoration = decoration
+		self.DecorationConnection = RunService.Heartbeat:Connect(function()
+			local time = os.clock()
+			local length = 46 + math.sin(time * 1.3) * 22
+			local sway = math.sin(time * 0.9) * 3
+
+			thread.Size = UDim2.fromOffset(1, length)
+			spider.Position = UDim2.new(1, offsetX + sway, 0, length + 12)
+		end)
+	end
+
 	function ThemeManager:ApplyTheme(theme)
 		local customThemeData = self:GetCustomTheme(theme)
 		local data = customThemeData or self.BuiltInThemes[theme]
 
 		if not data then return end
 
-		-- custom themes are just regular dictionaries instead of an array with { index, dictionary }
 		if self.Library.InnerVideoBackground ~= nil then
 			self.Library.InnerVideoBackground.Visible = false
 		end
-		
+
+		self:ApplyDecoration(customThemeData == nil and theme or nil)
+
 		local scheme = data[2]
 		for idx, col in next, customThemeData or scheme do
 			if idx == "VideoLink" then
 				self.Library[idx] = col
-				
+
 				if self.Library.Options[idx] then
 					self.Library.Options[idx]:SetValue(col)
 				end
-				
+
 				ApplyBackgroundVideo(col)
 			else
 				self.Library[idx] = Color3.fromHex(col)
-				
+
 				if self.Library.Options[idx] then
 					self.Library.Options[idx]:SetValueRGB(Color3.fromHex(col))
 				end
@@ -176,7 +347,7 @@ local ThemeManager = {} do
 	end
 
 	function ThemeManager:ThemeUpdate()
-		-- This allows us to force apply themes without loading the themes tab :)
+
 		if self.Library.InnerVideoBackground ~= nil then
 			self.Library.InnerVideoBackground.Visible = false
 		end
@@ -195,7 +366,6 @@ local ThemeManager = {} do
 		self.Library:UpdateColorsUsingRegistry()
 	end
 
-	--// Get, Load, Save, Delete, Refresh \\--
 	function ThemeManager:GetCustomTheme(file)
 		local path = self.Folder .. '/themes/' .. file .. '.json'
 		if not isfile(path) then
@@ -204,7 +374,7 @@ local ThemeManager = {} do
 
 		local data = readfile(path)
 		local success, decoded = pcall(HttpService.JSONDecode, HttpService, data)
-		
+
 		if not success then
 			return nil
 		end
@@ -267,10 +437,10 @@ local ThemeManager = {} do
 
 		local success = pcall(delfile, file)
 		if not success then return false, 'delete file error' end
-		
+
 		return true
 	end
-	
+
 	function ThemeManager:ReloadCustomThemes()
 		local list = listfiles(self.Folder .. '/themes')
 
@@ -278,7 +448,6 @@ local ThemeManager = {} do
 		for i = 1, #list do
 			local file = list[i]
 			if file:sub(-5) == '.json' then
-				-- i hate this but it has to be done ...
 
 				local pos = file:find('.json', 1, true)
 				local start = pos
@@ -298,7 +467,6 @@ local ThemeManager = {} do
 		return out
 	end
 
-	--// GUI \\--
 	function ThemeManager:CreateThemeManager(groupbox)
 		groupbox:AddLabel('Background color'):AddColorPicker('BackgroundColor', { Default = self.Library.BackgroundColor });
 		groupbox:AddLabel('Main color')	:AddColorPicker('MainColor', { Default = self.Library.MainColor });
@@ -306,7 +474,7 @@ local ThemeManager = {} do
 		groupbox:AddLabel('Outline color'):AddColorPicker('OutlineColor', { Default = self.Library.OutlineColor });
 		groupbox:AddLabel('Font color')	:AddColorPicker('FontColor', { Default = self.Library.FontColor });
 		groupbox:AddInput('VideoLink', { Text = '.webm Video Background (Link)', Default = self.Library.VideoLink });
-		
+
 		local ThemesArray = {}
 		for Name, Theme in next, self.BuiltInThemes do
 			table.insert(ThemesArray, Name)
@@ -329,7 +497,7 @@ local ThemeManager = {} do
 		groupbox:AddDivider()
 
 		groupbox:AddInput('ThemeManager_CustomThemeName', { Text = 'Custom theme name' })
-		groupbox:AddButton('Create theme', function() 
+		groupbox:AddButton('Create theme', function()
 			local name = self.Library.Options.ThemeManager_CustomThemeName.Value
 			if name:gsub(" ", "") == "" then
                 self.Library:Notify("Invalid theme name (empty)", 2)
@@ -383,11 +551,11 @@ local ThemeManager = {} do
 		end)
 		groupbox:AddButton('Reset default', function()
 			local success = pcall(delfile, self.Folder .. '/themes/default.txt')
-			if not success then 
+			if not success then
 				self.Library:Notify('Failed to reset default: delete file error')
 				return
 			end
-				
+
 			self.Library:Notify('Set default theme to nothing')
 			self.Library.Options.ThemeManager_CustomThemeList:SetValues(self:ReloadCustomThemes())
 			self.Library.Options.ThemeManager_CustomThemeList:SetValue(nil)
