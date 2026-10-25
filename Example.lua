@@ -6,6 +6,7 @@ local SaveManager = loadstring(game:HttpGet(Repo .. "SaveManager.lua"))()
 
 local Window = Library:CreateWindow({
     Title = "Example",
+    Logo = 18467582982,
     Center = true,
     AutoShow = true,
     TabPadding = 1,

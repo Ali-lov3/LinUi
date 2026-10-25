@@ -271,6 +271,7 @@ local Library = {
 
     CanDrag = true;
     CantDragForced = false;
+    ActiveSlider = nil;
 
     Unloaded = false;
 
@@ -1107,6 +1108,7 @@ local Templates = {
         AnchorPoint = Vector2.zero,
         TabPadding = 1,
         SidebarWidth = 36,
+        Logo = 18467582982,
         MenuFadeTime = 0.2,
         NotifySide = "Left",
         ShowCustomCursor = true,
@@ -4422,6 +4424,11 @@ do
             end
 
             if (Input.UserInputType == Enum.UserInputType.MouseButton1 and not Library:MouseIsOverOpenedFrame()) or Input.UserInputType == Enum.UserInputType.Touch then
+                if Library.ActiveSlider ~= nil then
+                    return
+                end
+                Library.ActiveSlider = Slider
+
                 if Library.IsMobile then
                     Library.CanDrag = false
                 end
@@ -4461,6 +4468,8 @@ do
 
                     RunService.RenderStepped:Wait()
                 end
+
+                Library.ActiveSlider = nil
 
                 if Library.IsMobile then
                     Library.CanDrag = true
@@ -6549,9 +6558,25 @@ function Library:CreateWindow(...)
         Size = UDim2.new(0, 0, 0, 25);
         Text = WindowInfo.Title or "";
         TextXAlignment = Enum.TextXAlignment.Left;
+        Visible = false;
         ZIndex = 1;
         Parent = Inner;
     })
+
+    local WindowLogo = Library:Create("ImageLabel", {
+        BackgroundTransparency = 1;
+        Position = UDim2.new(0, 7, 0, 3);
+        Size = UDim2.fromOffset(19, 19);
+        ScaleType = Enum.ScaleType.Fit;
+        Visible = false;
+        ZIndex = 2;
+        Parent = Inner;
+    })
+
+    if WindowInfo.Logo then
+        ApplyIcon(WindowLogo, WindowInfo.Logo)
+        WindowLogo.Visible = true
+    end
 
     local MainSectionOuter = Library:Create("Frame", {
         BackgroundColor3 = Library.BackgroundColor;
@@ -6666,6 +6691,15 @@ function Library:CreateWindow(...)
         if typeof(Title) == "string" then
             Window.Title = Title
             WindowLabel.Text = Window.Title
+        end
+    end
+
+    function Window:SetLogo(Icon)
+        if Icon then
+            ApplyIcon(WindowLogo, Icon)
+            WindowLogo.Visible = true
+        else
+            WindowLogo.Visible = false
         end
     end
 
