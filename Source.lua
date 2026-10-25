@@ -1106,7 +1106,7 @@ local Templates = {
         Size = UDim2.fromOffset(0, 0),
         AnchorPoint = Vector2.zero,
         TabPadding = 1,
-        SidebarWidth = 110,
+        SidebarWidth = 36,
         MenuFadeTime = 0.2,
         NotifySide = "Left",
         ShowCustomCursor = true,
@@ -6429,6 +6429,53 @@ do
     end
 end
 
+local Lucide
+pcall(function()
+    Lucide = loadstring(game:HttpGet("https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/main/icons.lua"))()
+end)
+
+local function ResolveIcon(Icon)
+    if type(Icon) == "number" then return "rbxassetid://" .. Icon end
+    if type(Icon) == "string" then
+        if string.match(Icon, "^rbxassetid://") then return Icon end
+        if string.match(Icon, "^%d+$") then return "rbxassetid://" .. Icon end
+        local Name = string.lower(Icon)
+        if type(Lucide) == "function" then
+            local ok, Data = pcall(Lucide, Name)
+            if ok and type(Data) == "table" then
+                local Id = Data.id or Data.Id or Data[1]
+                local Size = Data.imageRectSize or Data.ImageRectSize or Data[2]
+                local Offset = Data.imageRectOffset or Data.imageRectPosition or Data.ImageRectOffset or Data[3]
+                if Id then return "rbxassetid://" .. tostring(Id), Offset, Size end
+            end
+        elseif type(Lucide) == "table" then
+            for _, Set in { Lucide["48px"], Lucide["256px"], Lucide } do
+                if type(Set) == "table" then
+                    local Data = Set[Name]
+                    if type(Data) == "table" and Data[1] then
+                        return "rbxassetid://" .. tostring(Data[1]), Data[3], Data[2]
+                    end
+                end
+            end
+        end
+    end
+    return "rbxassetid://0"
+end
+
+local function ToVector2(Value)
+    if typeof(Value) == "Vector2" then return Value end
+    if type(Value) == "table" then return Vector2.new(Value[1] or Value.X or 0, Value[2] or Value.Y or 0) end
+    return Vector2.new(0, 0)
+end
+
+local function ApplyIcon(Object, Icon)
+    if not Icon then return end
+    local Image, Offset, Size = ResolveIcon(Icon)
+    Object.Image = Image
+    if Offset then Object.ImageRectOffset = ToVector2(Offset) end
+    if Size then Object.ImageRectSize = ToVector2(Size) end
+end
+
 function Library:CreateWindow(...)
     local Arguments = { ... }
     local WindowInfo = Templates.Window
@@ -6534,7 +6581,7 @@ function Library:CreateWindow(...)
         BackgroundColor3 = "BackgroundColor";
     })
 
-    local SidebarWidth = math.max(WindowInfo.SidebarWidth, 60)
+    local SidebarWidth = math.max(WindowInfo.SidebarWidth, 28)
 
     local TabArea = Library:Create("ScrollingFrame", {
         ScrollingDirection = Enum.ScrollingDirection.Y;
@@ -7120,7 +7167,7 @@ function Library:CreateWindow(...)
         return Dialog
     end
 
-    function Window:AddTab(Name)
+    function Window:AddTab(Name, Icon)
         local Tab = {
             Groupboxes = {};
             Tabboxes = {};
@@ -7141,7 +7188,7 @@ function Library:CreateWindow(...)
         local TabButton = Library:Create("Frame", {
             BackgroundColor3 = Library.BackgroundColor;
             BorderColor3 = Library.OutlineColor;
-            Size = UDim2.new(1, -1, 0, 26);
+            Size = UDim2.fromOffset(SidebarWidth - 1, SidebarWidth - 1);
             ZIndex = 1;
             Parent = TabArea;
         })
@@ -7151,12 +7198,21 @@ function Library:CreateWindow(...)
             BorderColor3 = "OutlineColor";
         })
 
-        local TabButtonLabel = Library:CreateLabel({
-            Position = UDim2.new(0, 0, 0, 0);
-            Size = UDim2.new(1, 0, 1, -1);
-            Text = Tab.Name;
-            ZIndex = 1;
+        local TabButtonIcon = Library:Create("ImageLabel", {
+            AnchorPoint = Vector2.new(0.5, 0.5);
+            BackgroundTransparency = 1;
+            Position = UDim2.fromScale(0.5, 0.5);
+            Size = UDim2.new(1, -12, 1, -12);
+            ScaleType = Enum.ScaleType.Fit;
+            ImageColor3 = Library.FontColor;
+            ZIndex = 2;
             Parent = TabButton;
+        })
+
+        ApplyIcon(TabButtonIcon, Icon)
+
+        Library:AddToRegistry(TabButtonIcon, {
+            ImageColor3 = "FontColor";
         })
 
         local Blocker = Library:Create("Frame", {
@@ -7434,6 +7490,8 @@ end
             Blocker.BackgroundTransparency = 0
             TabButton.BackgroundColor3 = Library.MainColor
             Library.RegistryMap[TabButton].Properties.BackgroundColor3 = "MainColor"
+            TabButtonIcon.ImageColor3 = Library.AccentColor
+            Library.RegistryMap[TabButtonIcon].Properties.ImageColor3 = "AccentColor"
             TabFrame.Visible = true
 
             Tab:Resize()
@@ -7444,6 +7502,8 @@ end
             Blocker.BackgroundTransparency = 1
             TabButton.BackgroundColor3 = Library.BackgroundColor
             Library.RegistryMap[TabButton].Properties.BackgroundColor3 = "BackgroundColor"
+            TabButtonIcon.ImageColor3 = Library.FontColor
+            Library.RegistryMap[TabButtonIcon].Properties.ImageColor3 = "FontColor"
             TabFrame.Visible = false
         end
         Tab.Hide = Tab.HideTab
@@ -7460,8 +7520,11 @@ end
         function Tab:SetName(Name)
             if typeof(Name) == "string" then
                 Tab.Name = Name
-                TabButtonLabel.Text = Tab.Name
             end
+        end
+
+        function Tab:SetIcon(NewIcon)
+            ApplyIcon(TabButtonIcon, NewIcon)
         end
 
         function Tab:AddGroupbox(Info)
