@@ -6720,7 +6720,7 @@ function Library:CreateWindow(...)
         AutomaticCanvasSize = Enum.AutomaticSize.Y;
         ScrollBarThickness = 0;
         BackgroundTransparency = 1;
-        Position = UDim2.new(0, 2, 0, 8);
+        Position = UDim2.new(0, 6, 0, 8);
         Size = UDim2.new(0, SidebarWidth, 1, -16);
         ZIndex = 1;
         Parent = MainSectionInner;
@@ -6770,9 +6770,11 @@ function Library:CreateWindow(...)
 
     local TabContainer = Library:Create("Frame", {
         BackgroundColor3 = Library.MainColor;
+        BackgroundTransparency = 1;
+        BorderSizePixel = 0;
         BorderColor3 = Library.OutlineColor;
-        Position = UDim2.new(0, 6 + SidebarWidth, 0, 8);
-        Size = UDim2.new(1, -(14 + SidebarWidth), 1, -16);
+        Position = UDim2.new(0, 22 + SidebarWidth, 0, 8);
+        Size = UDim2.new(1, -(30 + SidebarWidth), 1, -16);
         ZIndex = 2;
         Parent = MainSectionInner;
     })
