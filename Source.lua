@@ -272,6 +272,8 @@ local Library = {
     CanDrag = true;
     CantDragForced = false;
     ActiveSlider = nil;
+    PumpkinSliders = false;
+    SliderStyleUpdaters = {};
 
     Unloaded = false;
 
@@ -1060,6 +1062,14 @@ function Library:GiveSignal(Connection: RBXScriptConnection | RBXScriptSignal)
     end
 
     return Connection
+end
+
+function Library:SetPumpkinSliders(Enabled)
+    Library.PumpkinSliders = Enabled == true
+
+    for _, Updater in ipairs(Library.SliderStyleUpdaters) do
+        pcall(Updater)
+    end
 end
 
 function Library:Unload()
@@ -4145,6 +4155,54 @@ do
         return Toggle
     end
 
+    local function CreatePumpkin(Parent, Size, ZIndex)
+        local Holder = Library:Create("Frame", {
+            AnchorPoint = Vector2.new(0.5, 0.5);
+            BackgroundTransparency = 1;
+            Size = UDim2.fromOffset(Size, Size);
+            ZIndex = ZIndex;
+            Parent = Parent;
+        })
+
+        local function Piece(Name, X, Y, W, H, Color, Z)
+            local Frame = Library:Create("Frame", {
+                Name = Name;
+                AnchorPoint = Vector2.new(0.5, 0.5);
+                BackgroundColor3 = Color;
+                BorderSizePixel = 0;
+                Position = UDim2.fromScale(X, Y);
+                Size = UDim2.fromScale(W, H);
+                ZIndex = Z;
+                Parent = Holder;
+            })
+
+            return Frame
+        end
+
+        local function Round(Frame)
+            Library:Create("UICorner", {
+                CornerRadius = UDim.new(1, 0);
+                Parent = Frame;
+            })
+        end
+
+        Round(Piece("Left", 0.26, 0.58, 0.5, 0.76, Color3.fromRGB(196, 84, 0), ZIndex))
+        Round(Piece("Right", 0.74, 0.58, 0.5, 0.76, Color3.fromRGB(196, 84, 0), ZIndex))
+        Round(Piece("Middle", 0.5, 0.58, 0.52, 0.82, Color3.fromRGB(255, 128, 0), ZIndex + 1))
+
+        local Stem = Piece("Stem", 0.54, 0.1, 0.14, 0.2, Color3.fromRGB(74, 120, 32), ZIndex)
+        Stem.Rotation = 12
+
+        local EyeLeft = Piece("EyeLeft", 0.36, 0.5, 0.13, 0.13, Color3.fromRGB(44, 16, 0), ZIndex + 2)
+        EyeLeft.Rotation = 45
+        local EyeRight = Piece("EyeRight", 0.64, 0.5, 0.13, 0.13, Color3.fromRGB(44, 16, 0), ZIndex + 2)
+        EyeRight.Rotation = 45
+
+        Piece("Mouth", 0.5, 0.74, 0.36, 0.09, Color3.fromRGB(44, 16, 0), ZIndex + 2)
+
+        return Holder
+    end
+
     function BaseGroupboxFuncs:AddSlider(Idx, Info)
         assert(Info.Default,    string.format("AddSlider (IDX: %s): Missing default value.", tostring(Idx)))
         assert(Info.Text,       string.format("AddSlider (IDX: %s): Missing slider text.", tostring(Idx)))
@@ -4258,6 +4316,14 @@ do
             RichText = true;
         })
 
+        local PumpkinSize = 22
+        local PumpkinKnob = CreatePumpkin(SliderOuter, PumpkinSize, 8)
+        PumpkinKnob.Visible = Library.PumpkinSliders == true
+
+        table.insert(Library.SliderStyleUpdaters, function()
+            PumpkinKnob.Visible = Library.PumpkinSliders == true
+        end)
+
         Library:OnHighlight(SliderOuter, SliderOuter,
             { BorderColor3 = "AccentColor" },
             { BorderColor3 = "Black" },
@@ -4313,6 +4379,7 @@ do
 
             local X = Library:MapValue(Slider.Value, Slider.Min, Slider.Max, 0, 1)
             Fill.Size = UDim2.new(X, 0, 1, 0)
+            PumpkinKnob.Position = UDim2.new(X, math.floor((0.5 - X) * PumpkinSize), 0.5, 0)
 
             HideBorderRight.Visible = not (X == 1 or X == 0)
         end
@@ -6599,7 +6666,7 @@ function Library:CreateWindow(...)
         AutomaticCanvasSize = Enum.AutomaticSize.Y;
         ScrollBarThickness = 0;
         BackgroundTransparency = 1;
-        Position = UDim2.new(0, 8, 0, 8);
+        Position = UDim2.new(0, 2, 0, 8);
         Size = UDim2.new(0, SidebarWidth, 1, -16);
         ZIndex = 1;
         Parent = MainSectionInner;
@@ -6650,8 +6717,8 @@ function Library:CreateWindow(...)
     local TabContainer = Library:Create("Frame", {
         BackgroundColor3 = Library.MainColor;
         BorderColor3 = Library.OutlineColor;
-        Position = UDim2.new(0, 8 + SidebarWidth, 0, 8);
-        Size = UDim2.new(1, -(16 + SidebarWidth), 1, -16);
+        Position = UDim2.new(0, 6 + SidebarWidth, 0, 8);
+        Size = UDim2.new(1, -(14 + SidebarWidth), 1, -16);
         ZIndex = 2;
         Parent = MainSectionInner;
     })

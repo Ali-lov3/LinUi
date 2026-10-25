@@ -191,96 +191,174 @@ local ThemeManager = {} do
 		end
 	end
 
+	local function CreateCircle(parent, x, y, w, h, color, zindex)
+		local circle = Instance.new("Frame")
+		circle.AnchorPoint = Vector2.new(0.5, 0.5)
+		circle.Position = UDim2.new(0.5, x, 0.5, y)
+		circle.Size = UDim2.fromOffset(w, h)
+		circle.BackgroundColor3 = color
+		circle.BorderSizePixel = 0
+		circle.ZIndex = zindex
+		circle.Parent = parent
+
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(1, 0)
+		corner.Parent = circle
+
+		return circle
+	end
+
+	local function AddStroke(object, color, thickness)
+		local stroke = Instance.new("UIStroke")
+		stroke.Color = color
+		stroke.Thickness = thickness
+		stroke.Parent = object
+	end
+
 	local function CreateSpider(parent, offsetX)
 		local orange = Color3.fromRGB(255, 122, 0)
+		local dark = Color3.fromRGB(14, 10, 20)
 
 		local thread = Instance.new("Frame")
 		thread.AnchorPoint = Vector2.new(0.5, 0)
 		thread.Position = UDim2.new(1, offsetX, 0, 0)
 		thread.Size = UDim2.fromOffset(1, 40)
 		thread.BackgroundColor3 = Color3.fromRGB(235, 235, 245)
-		thread.BackgroundTransparency = 0.4
+		thread.BackgroundTransparency = 0.35
 		thread.BorderSizePixel = 0
 		thread.ZIndex = 12
 		thread.Parent = parent
 
 		local spider = Instance.new("Frame")
 		spider.AnchorPoint = Vector2.new(0.5, 0.5)
-		spider.Position = UDim2.new(1, offsetX, 0, 50)
-		spider.Size = UDim2.fromOffset(28, 28)
+		spider.Position = UDim2.new(1, offsetX, 0, 56)
+		spider.Size = UDim2.fromOffset(48, 48)
 		spider.BackgroundTransparency = 1
 		spider.ZIndex = 13
 		spider.Parent = parent
 
-		local legAngles = { -60, -22, 18, 56 }
-		for _, angle in next, legAngles do
-			for _, side in next, { 1, -1 } do
-				local rotation = side == 1 and angle or 180 - angle
+		local hipY = { -3, -1, 1, 3 }
+		local upperAngle = { -78, -42, -12, 18 }
+		local lowerAngle = { 38, 48, 58, 68 }
 
-				local leg = Instance.new("Frame")
-				leg.AnchorPoint = Vector2.new(0, 0.5)
-				leg.Position = UDim2.fromScale(0.5, 0.5)
-				leg.Size = UDim2.fromOffset(13, 2)
-				leg.Rotation = rotation
-				leg.BackgroundColor3 = orange
-				leg.BorderSizePixel = 0
-				leg.ZIndex = 13
-				leg.Parent = spider
+		for Index = 1, 4 do
+			for _, side in next, { 1, -1 } do
+				local hip = Vector2.new(side * 4, hipY[Index])
+				local upper = math.rad(upperAngle[Index])
+				local lower = math.rad(lowerAngle[Index])
+				local knee = hip + Vector2.new(side * math.cos(upper), math.sin(upper)) * 12
+				local foot = knee + Vector2.new(side * math.cos(lower), math.sin(lower)) * 13
+
+				CreateLine(spider, 0.5, 0.5, hip, knee, orange, 0.05, 2, 13)
+				CreateLine(spider, 0.5, 0.5, knee, foot, orange, 0.05, 2, 13)
 			end
 		end
 
-		local body = Instance.new("Frame")
-		body.AnchorPoint = Vector2.new(0.5, 0.5)
-		body.Position = UDim2.fromScale(0.5, 0.46)
-		body.Size = UDim2.fromOffset(14, 16)
-		body.BackgroundColor3 = Color3.fromRGB(10, 8, 14)
-		body.BorderSizePixel = 0
-		body.ZIndex = 14
-		body.Parent = spider
+		local abdomen = CreateCircle(spider, 0, -6, 18, 22, dark, 14)
+		AddStroke(abdomen, orange, 1.5)
 
-		local bodyCorner = Instance.new("UICorner")
-		bodyCorner.CornerRadius = UDim.new(1, 0)
-		bodyCorner.Parent = body
+		CreateCircle(spider, 0, -9, 7, 7, orange, 15)
+		CreateCircle(spider, 0, -2, 4, 4, orange, 15)
 
-		local bodyStroke = Instance.new("UIStroke")
-		bodyStroke.Color = orange
-		bodyStroke.Thickness = 1.5
-		bodyStroke.Parent = body
+		local head = CreateCircle(spider, 0, 9, 12, 10, dark, 15)
+		AddStroke(head, orange, 1.5)
+
+		for _, eye in next, { { -3, 8 }, { 3, 8 }, { -1.5, 11 }, { 1.5, 11 } } do
+			CreateCircle(spider, eye[1], eye[2], 2.5, 2.5, Color3.fromRGB(255, 40, 40), 16)
+		end
+
+		CreateLine(spider, 0.5, 0.5, Vector2.new(-2.5, 14), Vector2.new(-1.5, 18), orange, 0, 1.5, 16)
+		CreateLine(spider, 0.5, 0.5, Vector2.new(2.5, 14), Vector2.new(1.5, 18), orange, 0, 1.5, 16)
+
+		return thread, spider
+	end
+
+	local function CreateGhost(parent, size)
+		local height = size * 1.2
+
+		local ghost = Instance.new("CanvasGroup")
+		ghost.AnchorPoint = Vector2.new(0.5, 0.5)
+		ghost.Size = UDim2.fromOffset(size, height)
+		ghost.BackgroundTransparency = 1
+		ghost.GroupTransparency = 0.4
+		ghost.BorderSizePixel = 0
+		ghost.ZIndex = 11
+		ghost.Parent = parent
+
+		local white = Color3.fromRGB(242, 242, 255)
+		local face = Color3.fromRGB(24, 18, 36)
 
 		local head = Instance.new("Frame")
-		head.AnchorPoint = Vector2.new(0.5, 0.5)
-		head.Position = UDim2.fromScale(0.5, 0.78)
-		head.Size = UDim2.fromOffset(9, 9)
-		head.BackgroundColor3 = Color3.fromRGB(10, 8, 14)
+		head.Size = UDim2.fromOffset(size, size)
+		head.BackgroundColor3 = white
 		head.BorderSizePixel = 0
-		head.ZIndex = 15
-		head.Parent = spider
+		head.ZIndex = 12
+		head.Parent = ghost
 
 		local headCorner = Instance.new("UICorner")
 		headCorner.CornerRadius = UDim.new(1, 0)
 		headCorner.Parent = head
 
-		local headStroke = Instance.new("UIStroke")
-		headStroke.Color = orange
-		headStroke.Thickness = 1.5
-		headStroke.Parent = head
+		local body = Instance.new("Frame")
+		body.Position = UDim2.fromOffset(0, size * 0.5)
+		body.Size = UDim2.fromOffset(size, size * 0.52)
+		body.BackgroundColor3 = white
+		body.BorderSizePixel = 0
+		body.ZIndex = 12
+		body.Parent = ghost
 
-		for _, eyeX in next, { 0.3, 0.7 } do
-			local eye = Instance.new("Frame")
-			eye.AnchorPoint = Vector2.new(0.5, 0.5)
-			eye.Position = UDim2.fromScale(eyeX, 0.55)
-			eye.Size = UDim2.fromOffset(2, 2)
-			eye.BackgroundColor3 = Color3.fromRGB(255, 40, 40)
-			eye.BorderSizePixel = 0
-			eye.ZIndex = 16
-			eye.Parent = head
+		local bump = size / 3
+		for Index = 0, 2 do
+			local skirt = Instance.new("Frame")
+			skirt.Position = UDim2.fromOffset(bump * Index, height - bump)
+			skirt.Size = UDim2.fromOffset(bump, bump)
+			skirt.BackgroundColor3 = white
+			skirt.BorderSizePixel = 0
+			skirt.ZIndex = 12
+			skirt.Parent = ghost
+
+			local skirtCorner = Instance.new("UICorner")
+			skirtCorner.CornerRadius = UDim.new(1, 0)
+			skirtCorner.Parent = skirt
 		end
 
-		return thread, spider
+		for _, eyeX in next, { 0.32, 0.68 } do
+			local eye = Instance.new("Frame")
+			eye.AnchorPoint = Vector2.new(0.5, 0.5)
+			eye.Position = UDim2.fromOffset(size * eyeX, size * 0.4)
+			eye.Size = UDim2.fromOffset(size * 0.14, size * 0.2)
+			eye.BackgroundColor3 = face
+			eye.BorderSizePixel = 0
+			eye.ZIndex = 13
+			eye.Parent = ghost
+
+			local eyeCorner = Instance.new("UICorner")
+			eyeCorner.CornerRadius = UDim.new(1, 0)
+			eyeCorner.Parent = eye
+		end
+
+		local mouth = Instance.new("Frame")
+		mouth.AnchorPoint = Vector2.new(0.5, 0.5)
+		mouth.Position = UDim2.fromOffset(size * 0.5, size * 0.68)
+		mouth.Size = UDim2.fromOffset(size * 0.16, size * 0.2)
+		mouth.BackgroundColor3 = face
+		mouth.BorderSizePixel = 0
+		mouth.ZIndex = 13
+		mouth.Parent = ghost
+
+		local mouthCorner = Instance.new("UICorner")
+		mouthCorner.CornerRadius = UDim.new(1, 0)
+		mouthCorner.Parent = mouth
+
+		return ghost
 	end
 
 	function ThemeManager:ApplyDecoration(theme)
 		self:ClearDecoration()
+
+		if self.Library and self.Library.SetPumpkinSliders then
+			self.Library:SetPumpkinSliders(theme == "Halloween")
+		end
 
 		local window = self.Library and self.Library.WindowFrame
 		if theme ~= "Halloween" or not window then return end
@@ -301,6 +379,12 @@ local ThemeManager = {} do
 		local offsetX = -64
 		local thread, spider = CreateSpider(decoration, offsetX)
 
+		local ghosts = {
+			{ object = CreateGhost(decoration, 26), x = 0.2, y = 0.3, phase = 0, speed = 1.1 },
+			{ object = CreateGhost(decoration, 22), x = 0.58, y = 0.84, phase = 2.1, speed = 0.8 },
+			{ object = CreateGhost(decoration, 30), x = 0.9, y = 0.58, phase = 4.2, speed = 1.4 },
+		}
+
 		self.Decoration = decoration
 		self.DecorationConnection = RunService.Heartbeat:Connect(function()
 			local time = os.clock()
@@ -308,7 +392,14 @@ local ThemeManager = {} do
 			local sway = math.sin(time * 0.9) * 3
 
 			thread.Size = UDim2.fromOffset(1, length)
-			spider.Position = UDim2.new(1, offsetX + sway, 0, length + 12)
+			spider.Position = UDim2.new(1, offsetX + sway, 0, length + 19)
+			spider.Rotation = math.sin(time * 0.9) * 4
+
+			for _, ghost in next, ghosts do
+				local drift = math.sin(time * 0.5 * ghost.speed + ghost.phase) * 0.04
+				local float = math.sin(time * 1.5 * ghost.speed + ghost.phase) * 7
+				ghost.object.Position = UDim2.new(ghost.x + drift, 0, ghost.y, float)
+			end
 		end)
 	end
 
