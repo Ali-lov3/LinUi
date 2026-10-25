@@ -6684,11 +6684,13 @@ function Library:CreateWindow(...)
         Parent = Inner;
     })
 
+    local SidebarWidth = math.max(WindowInfo.SidebarWidth, 28)
+
     local MainSectionOuter = Library:Create("Frame", {
         BackgroundColor3 = Library.BackgroundColor;
         BorderColor3 = Library.OutlineColor;
-        Position = UDim2.new(0, 8, 0, 25);
-        Size = UDim2.new(1, -16, 1, -33);
+        Position = UDim2.new(0, 16 + SidebarWidth, 0, 25);
+        Size = UDim2.new(1, -(24 + SidebarWidth), 1, -33);
         ZIndex = 1;
         Parent = Inner;
     })
@@ -6712,18 +6714,16 @@ function Library:CreateWindow(...)
         BackgroundColor3 = "BackgroundColor";
     })
 
-    local SidebarWidth = math.max(WindowInfo.SidebarWidth, 28)
-
     local TabArea = Library:Create("ScrollingFrame", {
         ScrollingDirection = Enum.ScrollingDirection.Y;
         CanvasSize = UDim2.new(0, 0, 0, 0);
         AutomaticCanvasSize = Enum.AutomaticSize.Y;
         ScrollBarThickness = 0;
         BackgroundTransparency = 1;
-        Position = UDim2.new(0, 6, 0, 8);
-        Size = UDim2.new(0, SidebarWidth, 1, -16);
+        Position = UDim2.new(0, 8, 0, 33);
+        Size = UDim2.new(0, SidebarWidth, 1, -41);
         ZIndex = 1;
-        Parent = MainSectionInner;
+        Parent = Inner;
     })
 
     local TabListLayout = Library:Create("UIListLayout", {
@@ -6773,8 +6773,8 @@ function Library:CreateWindow(...)
         BackgroundTransparency = 1;
         BorderSizePixel = 0;
         BorderColor3 = Library.OutlineColor;
-        Position = UDim2.new(0, 22 + SidebarWidth, 0, 8);
-        Size = UDim2.new(1, -(30 + SidebarWidth), 1, -16);
+        Position = UDim2.new(0, 8, 0, 8);
+        Size = UDim2.new(1, -16, 1, -16);
         ZIndex = 2;
         Parent = MainSectionInner;
     })
